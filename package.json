@@ -1,0 +1,56 @@
+{
+  "name": "authzed-ts",
+  "version": "0.0.0",
+  "description": "Type-safe wrapper for @autzed/authzed-node using code generation",
+  "author": "Svante Bengtson <svante@swantzter.se> (https://swantzter.se)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swantzter/autzed-ts.git"
+  },
+  "main": "dist/cjs/main.js",
+  "module": "dist/esm/main.js",
+  "types": "dist/esm/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/main.d.ts",
+      "require": "./dist/cjs/main.js",
+      "import": "./dist/esm/main.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:docs": "typedoc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ignore-path .gitignore",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "NODE_ENV=test NODE_OPTIONS='--loader tsx' mocha lib",
+    "test:coverage": "NODE_ENV=test c8 -r lcov -r text npm run test",
+    "preversion": "npm run lint && npm run typecheck && npm run test:coverage",
+    "postversion": "git push && git push --tags",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": "^16.17.0 || >= 18.3.0"
+  },
+  "dependencies": {
+    "chevrotain": "^10.5.0",
+    "xregexp": "^5.1.1"
+  },
+  "peerDependencies": {
+    "@authzed/authzed-node": "^0.11.0"
+  },
+  "devDependencies": {
+    "@authzed/authzed-node": "^0.11.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18",
+    "c8": "^7.11.3",
+    "eslint": "^8.21.0",
+    "eslint-config-standard-with-typescript": "^34.0.1",
+    "mocha": "^10.0.0",
+    "tsx": "^3.8.0",
+    "typedoc": "^0.24.7",
+    "typedoc-plugin-missing-exports": "^2.0.0",
+    "typescript": "^5.0.4"
+  }
+}
