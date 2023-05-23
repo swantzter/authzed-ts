@@ -157,7 +157,7 @@ export class ZedClient <
 
     return {
       resourceIds: resp.map(r => this.idTransformer?.parse(r.resourceObjectId) ?? r.resourceObjectId),
-      lookedUpAt: resp.at(-1)?.lookedUpAt
+      zedToken: resp.at(-1)?.lookedUpAt
     }
   }
 
@@ -187,7 +187,7 @@ export class ZedClient <
   // TODO: Unfortunately you need to call the defineWriteRelationship function
   // on each array member to get type completion, it'd be nice to improve that
   async writeRelationships (relationships: Array<ReturnType<typeof this.defineWriteRelationship>>) {
-    await this.client.writeRelationships(v1.WriteRelationshipsRequest.create({
+    const resp = await this.client.writeRelationships(v1.WriteRelationshipsRequest.create({
       updates: relationships.map(r => v1.RelationshipUpdate.create({
         relationship: v1.Relationship.create({
           resource: this.getObjectRef(r.resource[0], r.resource[1]),
@@ -200,5 +200,9 @@ export class ZedClient <
         operation: v1.RelationshipUpdate_Operation[r.operation]
       }))
     }))
+
+    return {
+      zedToken: resp.writtenAt
+    }
   }
 }
