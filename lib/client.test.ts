@@ -123,6 +123,7 @@ type RelationsMeta = {
 const zedClient = new ZedClient<PermissionsMeta, RelationsMeta>(_client)
 
 zedClient.checkPermission(['organisation', 1], 'view_organisation', ['person', 2])
+zedClient.checkPermission(['swantzter/organisation', 1], 'view_organisation', ['person', 2])
 zedClient.checkPermission(['organisation', 1], 'edit_organisation', ['system', 2])
 
 zedClient.checkPermission(['person', 1], 'view_person', ['system', 2])

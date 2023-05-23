@@ -1,11 +1,11 @@
 import { v1 } from '@authzed/authzed-node'
 
 export interface ZedIdTransformer {
-    /** Takes application-code ID and returns Authzed friendly ID */
-    serialize: (objectId: string) => string,
-    /** Takes Authzed friendly ID and returns application-code ID */
-    parse: (objectId: string) => string
-  }
+  /** Takes application-code ID and returns Authzed friendly ID */
+  serialize: (objectId: string) => string
+  /** Takes Authzed friendly ID and returns application-code ID */
+  parse: (objectId: string) => string
+}
 
 export interface ZedClientConstructorArgs {
   /** Optionally the default prefix prepended for all your resources */
@@ -44,9 +44,9 @@ export class ZedClient <
   P extends SchemaPermissionsMetadata,
   R extends SchemaRelationsMetadata
 > {
-  private client: v1.ZedPromiseClientInterface
-  public defaultPermissionSystem?: string
-  public idTransformer?: ZedIdTransformer
+  private readonly client: v1.ZedPromiseClientInterface
+  public readonly defaultPermissionSystem?: string
+  public readonly idTransformer?: ZedIdTransformer
 
   constructor (client: v1.ZedClientInterface, options: ZedClientConstructorArgs = {}) {
     this.client = client.promises
@@ -115,11 +115,12 @@ export class ZedClient <
   // ===========================================================================
   async checkPermission <
     ResourceType extends keyof P extends string ? keyof P : never,
-    Permission extends keyof P[ResourceType] extends string ? keyof P[ResourceType] : never
+    Permission extends keyof P[ResourceType] extends string ? keyof P[ResourceType] : never,
+    SubjectType extends P[ResourceType][Permission]['subjectType']
   > (
-    [resourceType, resourceId]: [ResourceType, string | number],
+    [resourceType, resourceId]: [ResourceType | `${string}/${ResourceType}`, string | number],
     permission: Permission,
-    [subjectType, subjectId]: [P[ResourceType][Permission]['subjectType'], string | number],
+    [subjectType, subjectId]: [SubjectType | `${string}/${SubjectType}`, string | number],
     options?: CheckPermissionOptions<P[ResourceType][Permission]['context']>
   ) {
     const resp = await this.client.checkPermission(v1.CheckPermissionRequest.create({
@@ -138,11 +139,12 @@ export class ZedClient <
 
   async lookupResources <
     ResourceType extends keyof P extends string ? keyof P : never,
-    Permission extends keyof P[ResourceType] extends string ? keyof P[ResourceType] : never
+    Permission extends keyof P[ResourceType] extends string ? keyof P[ResourceType] : never,
+    SubjectType extends P[ResourceType][Permission]['subjectType']
     > (
-    resourceType: ResourceType,
+    resourceType: ResourceType | `${string}/${ResourceType}`,
     permission: Permission,
-    [subjectType, subjectId]: [P[ResourceType][Permission]['subjectType'], string | number],
+    [subjectType, subjectId]: [SubjectType | `${string}/${SubjectType}`, string | number],
     options?: LookupResourcesOptions<P[ResourceType][Permission]['context']>
   ) {
     const resp = await this.client.lookupResources(v1.LookupResourcesRequest.create({
@@ -171,11 +173,11 @@ export class ZedClient <
   > (
     relationship: {
       operation: 'CREATE' | 'DELETE' | 'TOUCH'
-      resource: [ResourceType, string | number]
+      resource: [ResourceType | `${string}/${ResourceType}`, string | number]
       relation: Relation
       // TODO: I think this one is wrong and the three param version might have more subjectTypes allowed?
       /** [subjectType, subjectId, subRelation?] */
-      subject: [SubjectType, string | number] | [SubjectType, string | number, string]
+      subject: [SubjectType | `${string}/${SubjectType}`, string | number] | [SubjectType, string | number, string]
       caveat?: [CaveatName, CaveatType]
     }
   ) {
@@ -191,7 +193,7 @@ export class ZedClient <
           resource: this.getObjectRef(r.resource[0], r.resource[1]),
           relation: r.relation,
           subject: this.getSubjectRef(r.subject[0], r.subject[1], r.subject[2]),
-          optionalCaveat: !!r.caveat?.[0]
+          optionalCaveat: r.caveat?.[0]
             ? v1.ContextualizedCaveat.create({ caveatName: r.caveat[0], context: r.caveat[1] })
             : undefined
         }),
