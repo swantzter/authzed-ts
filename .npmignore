@@ -6,3 +6,4 @@ lib
 test
 coverage
 *.tgz
+*.zed

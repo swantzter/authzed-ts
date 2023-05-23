@@ -18,3 +18,5 @@ coverage
 # .DS_Store
 **/.DS_Store
 docs
+
+test/schemas/*.json
