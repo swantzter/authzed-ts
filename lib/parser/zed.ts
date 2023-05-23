@@ -1,6 +1,6 @@
 import { CstParser, Lexer, type TokenType, createToken as orgCreateToken } from 'chevrotain'
 
-// This is based on https://github.com/Chevrotain/chevrotain/blob/6d210a382b6473379aa7e40857ecf42e14b1248f/examples/grammars/graphql/graphql.js
+// I've tried to follow the implementation in https://github.com/authzed/spicedb/blob/main/pkg/schemadsl/parser/parser.go
 
 // ----------------- lexer -----------------
 const allTokens: TokenType[] = []
