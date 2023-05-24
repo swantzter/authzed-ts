@@ -81,9 +81,8 @@ const Ellipsis = createToken({ name: 'Ellipsis', pattern: '...' })
 const Comma = createToken({ name: 'Comma', pattern: ',' })
 
 // keywords and Name
-// Name must not be placed into the TokenTypeList before any keywords
+// Identifier must not be placed into the TokenTypeList before any keywords
 // as it can match any keyword, so we use "orgCreateToken"
-// TODO: create a NameOrKeyword token
 const Identifier = orgCreateToken({
   name: 'Identifier',
   pattern: /[_A-Za-z][_0-9A-Za-z]*/

@@ -3,6 +3,7 @@ import { loadFromDb, loadFromFile, watchFile } from '../lib/schema.js'
 import { parse } from '../lib/parser.js'
 import { type RootAstNode, zedVisitor } from '../lib/visitor.js'
 import { generate } from '../lib/generator.js'
+import pLimit from 'p-limit'
 
 const args = parseArgs({
   options: {
@@ -97,9 +98,13 @@ async function run () {
   await validateArgs()
 
   if (args.values.watch) {
+    const limit = pLimit(1)
     watchFile(args.values.file!, async schema => {
+      // We just cancel any pending and add our new execution to run immediately
+      // after the currently running one is done
+      limit.clearQueue()
       try {
-        await processSchema(args.values.output!, schema)
+        await limit(async () => { await processSchema(args.values.output!, schema) })
       } catch (err) {
         console.warn(err)
       }

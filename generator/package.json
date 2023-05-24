@@ -31,6 +31,7 @@
     "@authzed/authzed-node": "^0.11.0",
     "chevrotain": "^10.5.0",
     "dedent": "^0.7.0",
+    "p-limit": "^4.0.0",
     "ts-morph": "^18.0.0",
     "yaml": "^2.3.0"
   },

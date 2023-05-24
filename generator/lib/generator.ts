@@ -4,8 +4,6 @@ import type { ParameterTypeAstNode, RootAstNode } from './visitor.js'
 import path from 'node:path'
 import dedent from 'dedent'
 
-// TODO: implement locks so generations happen in series when watching
-
 const caveatSimpleTypeToTypescriptType = {
   any: 'any',
 
