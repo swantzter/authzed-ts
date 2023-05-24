@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "es2022",
+    "outDir": "./dist/esm"
+  },
+  "include": [
+    "lib/**/*",
+    "bin/**/*"
+  ],
+  "exclude": [
+    "**/*.test.ts"
+  ]
+}

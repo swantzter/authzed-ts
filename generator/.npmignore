@@ -1,0 +1,9 @@
+.eslintrc.js
+.mocharc.js
+lib
+.github
+.gitignore
+test
+coverage
+*.tgz
+*.zed
