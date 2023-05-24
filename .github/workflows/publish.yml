@@ -13,6 +13,12 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    strategy:
+      matrix:
+        workdir: [client, generator]
+    defaults:
+      run:
+        working-directory: ${{ matrix.workdir }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -28,6 +34,12 @@ jobs:
 
   publish-gpr:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workdir: [client, generator]
+    defaults:
+      run:
+        working-directory: ${{ matrix.workdir }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -36,7 +48,7 @@ jobs:
           cache: npm
           registry-url: https://npm.pkg.github.com/
       - run: npm ci --prefer-offline
-      - run: sed -i 's,"authzed-ts","@swantzter/authzed-ts",' package*.json
+      - run: sed -i 's,"@authzed-ts/","@swantzter/zed-",' package*.json
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
