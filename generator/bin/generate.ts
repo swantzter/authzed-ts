@@ -1,8 +1,8 @@
 import { parseArgs } from 'node:util'
-import { loadFromDb, loadFromFile, watchFile } from '../lib/schema'
-import { parse } from '../lib/parser'
-import { type RootAstNode, zedVisitor } from '../lib/visitor'
-import { generate } from '../lib/generator'
+import { loadFromDb, loadFromFile, watchFile } from '../lib/schema.js'
+import { parse } from '../lib/parser.js'
+import { type RootAstNode, zedVisitor } from '../lib/visitor.js'
+import { generate } from '../lib/generator.js'
 
 const args = parseArgs({
   options: {
@@ -32,12 +32,17 @@ const args = parseArgs({
     },
     watch: {
       type: 'boolean'
+    },
+    help: {
+      type: 'boolean',
+      short: 'h'
     }
   }
 })
 
-function printUsage () {
-  console.log(`Command Line to generate types for @authzed-ts/client
+async function printUsage () {
+  await new Promise<void>(resolve => {
+    process.stderr.write(`Command Line to generate types for @authzed-ts/client
 
 Usage:
   zed-ts-gen --output <path> --file <path> [--watch]
@@ -49,28 +54,34 @@ Flags:
   -t, --token <token>           Token used to authenticate to SpiceDB for remote schema
       --certificate-path <path> path to certificate authoriy used to verify secure connections
       --watch                   Watch for changes to the schema and auto regenerate types
-`)
+  -h, --help                    Show this message
+`, () => { resolve() })
+  })
 }
 
-function validateArgs () {
+async function validateArgs () {
+  if (args.values.help) {
+    await printUsage()
+    return process.exit(0)
+  }
   if (args.values.output == null) {
-    console.error('--output is required')
-    printUsage()
+    await printUsage()
+    console.error('\n--output is required')
     return process.exit(1)
   }
   if (args.values.file == null && args.values.token == null) {
-    console.error('Either --file, or --token has to be provided')
-    printUsage()
+    await printUsage()
+    console.error('\nEither --file, or --token has to be provided')
     return process.exit(1)
   }
   if (args.values.file && [args.values.token, args.values['certificate-path']].some(v => v != null)) {
-    console.error('--token, --permission-system, and --certificate-path are not valid options when --file is provided')
-    printUsage()
+    await printUsage()
+    console.error('\n--token, --permission-system, and --certificate-path are not valid options when --file is provided')
     return process.exit(1)
   }
   if (args.values.token != null && !!args.values.watch) {
-    console.error('Watch mode not yet implemented for remote schema')
-    printUsage()
+    await printUsage()
+    console.error('\nWatch mode not yet implemented for remote schema')
     return process.exit(1)
   }
 }
@@ -83,7 +94,7 @@ async function processSchema (outputFile: string, schema: string) {
 }
 
 async function run () {
-  validateArgs()
+  await validateArgs()
 
   if (args.values.watch) {
     watchFile(args.values.file!, async schema => {

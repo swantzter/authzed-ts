@@ -4,19 +4,14 @@
   "description": "Codegen for @authzed-ts/client",
   "author": "Svante Bengtson <svante@swantzter.se> (https://swantzter.se)",
   "license": "MIT",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/swantzter/autzed-ts.git"
   },
-  "main": "dist/cjs/main.js",
-  "module": "dist/esm/main.js",
-  "types": "dist/esm/main.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/esm/main.d.ts",
-      "require": "./dist/cjs/main.js",
-      "import": "./dist/esm/main.js"
-    }
+  "exports": {},
+  "bin": {
+    "zed-ts-gen": "./dist/bin/generate.js"
   },
   "scripts": {
     "build": "tsc -b",

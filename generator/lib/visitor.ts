@@ -1,5 +1,5 @@
-import { zedParser } from './parser'
-import type { ArrowExpressionCstChildren, AtomicExpressionCstChildren, CaveatDefinitionCstChildren, CaveatExpressionCstChildren, CaveatParameterCstChildren, CaveatParameterTypeCstChildren, CaveatReferenceCstChildren, DefinitionCstChildren, ExclusionExpressionCstChildren, ExpressionCstChildren, ICstNodeVisitor, IntersectExpressionCstChildren, NamespaceCstChildren, ObjectDefinitionCstChildren, ParenthesisExpressionCstChildren, PermissionCstChildren, RelationCstChildren, SchemaCstChildren, TypePathCstChildren, TypeReferenceCstChildren, TypeReferenceTargetCstChildren, UnionExpressionCstChildren, WildcardCstChildren } from './zed_cst'
+import { zedParser } from './parser.js'
+import type { ArrowExpressionCstChildren, AtomicExpressionCstChildren, CaveatDefinitionCstChildren, CaveatExpressionCstChildren, CaveatParameterCstChildren, CaveatParameterTypeCstChildren, CaveatReferenceCstChildren, DefinitionCstChildren, ExclusionExpressionCstChildren, ExpressionCstChildren, ICstNodeVisitor, IntersectExpressionCstChildren, NamespaceCstChildren, ObjectDefinitionCstChildren, ParenthesisExpressionCstChildren, PermissionCstChildren, RelationCstChildren, SchemaCstChildren, TypePathCstChildren, TypeReferenceCstChildren, TypeReferenceTargetCstChildren, UnionExpressionCstChildren, WildcardCstChildren } from './zed_cst.d.ts'
 
 // Obtains the default CstVisitor constructor to extend.
 const BaseCstVisitor = zedParser.getBaseCstVisitorConstructor()

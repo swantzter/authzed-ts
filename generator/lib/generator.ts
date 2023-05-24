@@ -1,6 +1,6 @@
 /* eslint-disable no-lone-blocks */
 import { mkdirSync, writeFileSync } from 'node:fs'
-import type { ParameterTypeAstNode, RootAstNode } from './visitor'
+import type { ParameterTypeAstNode, RootAstNode } from './visitor.js'
 import path from 'node:path'
 import dedent from 'dedent'
 
