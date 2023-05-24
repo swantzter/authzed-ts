@@ -1,0 +1,20 @@
+{
+  "name": "@authzed-ts/docs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Typedoc generation",
+  "author": "Svante Bengtson <svante@swantzter.se> (https://swantzter.se)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swantzter/autzed-ts.git"
+  },
+  "scripts": {
+    "build:docs": "typedoc"
+  },
+  "devDependencies": {
+    "typedoc": "^0.24.7",
+    "typedoc-plugin-missing-exports": "^2.0.0",
+    "typescript": "^5.0.4"
+  }
+}

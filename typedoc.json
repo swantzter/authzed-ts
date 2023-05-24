@@ -1,10 +1,11 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": [
-    "lib/main.ts"
+    "client/lib/main.ts",
+    "generator/lib/main.ts",
   ],
   "entryPointStrategy": "expand",
-  "exclude": ["lib/**/*.test.{ts,js}", "lib/**/*.d.ts"],
+  "exclude": ["*/lib/**/*.test.{ts,js}", "*/lib/**/*.d.ts"],
   "excludeExternals": true,
   "excludeInternal": true,
   "includeVersion": true,
