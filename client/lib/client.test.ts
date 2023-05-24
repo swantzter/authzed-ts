@@ -30,7 +30,7 @@ type ZedClientType = {
         member: {
           user: {
             caveat: 'second_caveat'
-            wildcard: false
+            wildcard: true
           }
         }
       }
@@ -38,7 +38,8 @@ type ZedClientType = {
 
     document: {
       permissions: {
-        write: {
+        write:
+        {
           subjectType: keyof ZedClientType['objects']['document']['relations']['writer'] // writer
           caveat: ZedClientType['objects']['document']['relations']['writer'][keyof ZedClientType['objects']['document']['relations']['writer']]['caveat']
         } | {
@@ -59,6 +60,8 @@ type ZedClientType = {
           subjectType: keyof ZedClientType['objects']['group']['relations']['member'] // group->member
           caveat: ZedClientType['objects']['group']['relations']['member'][keyof ZedClientType['objects']['group']['relations']['member']]['caveat']
         }
+
+        nope: never
       }
       relations: {
         writer: {
