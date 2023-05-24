@@ -18,8 +18,19 @@ export interface ZedClientConstructorArgs {
   idTransformer?: ZedIdTransformer
 }
 
-export type SchemaPermissionsMetadata = Record<string, Record<string, { subjectType: string, context: Record<string, unknown> }>>
-export type SchemaRelationsMetadata = Record<string, Record<string, Array<{ subjectType: string, caveats: Record<string, Record<string, unknown>>, wildcards: boolean }>>>
+export interface SchemaMetadata {
+  caveats: Record<string, Record<string, unknown>>
+  objects: Record<string, {
+    permissions: Record<string, {
+      subjectType: keyof SchemaMetadata['objects'][string]['relations'][string]
+      caveat: keyof SchemaMetadata['caveats']
+    }>
+    relations: Record<string, Record<string, {
+      caveat: keyof SchemaMetadata['caveats']
+      wildcard: boolean
+    }>>
+  }>
+}
 
 interface BoolConsistency {
   type: 'minimizeLatency' | 'fullyConsistent'
@@ -32,18 +43,30 @@ type Consistency = BoolConsistency | TokenConsistency
 
 export interface CheckPermissionOptions <CaveatContext extends Record<string, unknown>> {
   consistency?: Consistency
-  caveatContext?: CaveatContext
+  caveatContext?: Partial<CaveatContext>
 }
 
 export interface LookupResourcesOptions <CaveatContext extends Record<string, unknown>> {
   consistency?: Consistency
-  caveatContext?: CaveatContext
+  caveatContext?: Partial<CaveatContext>
 }
 
-export class ZedClient <
-  P extends SchemaPermissionsMetadata,
-  R extends SchemaRelationsMetadata
-> {
+export interface DefineWriteRelationshipOptions <M extends SchemaMetadata, CaveatName extends keyof M['caveats']> {
+  operation?: 'TOUCH' | 'CREATE' | 'DELETE'
+  caveatName?: CaveatName
+  caveatContext?: Partial<M['caveats'][CaveatName]>
+}
+
+type WriteRelationshipsInternalOptions = Brand<{
+  resource: [string, string | number]
+  relation: string
+  subject: [string, string | number] | [string, string | number, string]
+  options: DefineWriteRelationshipOptions<SchemaMetadata, keyof SchemaMetadata['caveats']>
+}, 'authzed-ts-write-relationship'>
+
+type Brand<K, T> = K & { __brand: T }
+
+export class ZedClient <M extends SchemaMetadata> {
   private readonly client: v1.ZedPromiseClientInterface
   public readonly defaultPermissionSystem?: string
   public readonly idTransformer?: ZedIdTransformer
@@ -114,14 +137,26 @@ export class ZedClient <
   // Permissions
   // ===========================================================================
   async checkPermission <
-    ResourceType extends keyof P extends string ? keyof P : never,
-    Permission extends keyof P[ResourceType] extends string ? keyof P[ResourceType] : never,
-    SubjectType extends P[ResourceType][Permission]['subjectType']
+    ResourceType extends keyof M['objects'] extends string ? keyof M['objects'] : never,
+
+    Permission extends
+    (keyof M['objects'][ResourceType]['permissions'] extends string ? keyof M['objects'][ResourceType]['permissions'] : never) |
+    (keyof M['objects'][ResourceType]['relations'] extends string ? keyof M['objects'][ResourceType]['relations'] : never),
+
+    SubjectType extends
+    M['objects'][ResourceType]['permissions'][Permission] extends string
+      ? (M['objects'][ResourceType]['permissions'][Permission] extends string ? M['objects'][ResourceType]['permissions'][Permission] : never)
+      : (keyof M['objects'][ResourceType]['relations'][Permission] extends string ? keyof M['objects'][ResourceType]['relations'][Permission] : never),
+
+    CaveatName extends
+    Permission extends keyof M['objects'][ResourceType]['permissions']
+      ? M['objects'][ResourceType]['permissions'][Permission]['caveat']
+      : M['objects'][ResourceType]['relations'][Permission][SubjectType]['caveat']
   > (
     [resourceType, resourceId]: [ResourceType | `${string}/${ResourceType}`, string | number],
     permission: Permission,
     [subjectType, subjectId]: [SubjectType | `${string}/${SubjectType}`, string | number],
-    options?: CheckPermissionOptions<P[ResourceType][Permission]['context']>
+    options?: CheckPermissionOptions<M['caveats'][CaveatName]>
   ) {
     const resp = await this.client.checkPermission(v1.CheckPermissionRequest.create({
       resource: this.getObjectRef(resourceType, resourceId),
@@ -138,14 +173,26 @@ export class ZedClient <
   }
 
   async lookupResources <
-    ResourceType extends keyof P extends string ? keyof P : never,
-    Permission extends keyof P[ResourceType] extends string ? keyof P[ResourceType] : never,
-    SubjectType extends P[ResourceType][Permission]['subjectType']
-    > (
+    ResourceType extends keyof M['objects'] extends string ? keyof M['objects'] : never,
+
+    Permission extends
+    (keyof M['objects'][ResourceType]['permissions'] extends string ? keyof M['objects'][ResourceType]['permissions'] : never) |
+    (keyof M['objects'][ResourceType]['relations'] extends string ? keyof M['objects'][ResourceType]['relations'] : never),
+
+    SubjectType extends
+    M['objects'][ResourceType]['permissions'][Permission] extends string
+      ? (M['objects'][ResourceType]['permissions'][Permission] extends string ? M['objects'][ResourceType]['permissions'][Permission] : never)
+      : (keyof M['objects'][ResourceType]['relations'][Permission] extends string ? keyof M['objects'][ResourceType]['relations'][Permission] : never),
+
+    CaveatName extends
+    Permission extends keyof M['objects'][ResourceType]['permissions']
+      ? M['objects'][ResourceType]['permissions'][Permission]['caveat']
+      : M['objects'][ResourceType]['relations'][Permission][SubjectType]['caveat']
+  > (
     resourceType: ResourceType | `${string}/${ResourceType}`,
     permission: Permission,
     [subjectType, subjectId]: [SubjectType | `${string}/${SubjectType}`, string | number],
-    options?: LookupResourcesOptions<P[ResourceType][Permission]['context']>
+    options?: LookupResourcesOptions<M['caveats'][CaveatName]>
   ) {
     const resp = await this.client.lookupResources(v1.LookupResourcesRequest.create({
       resourceObjectType: this.prefixObjectType(resourceType),
@@ -165,39 +212,47 @@ export class ZedClient <
   // Relationships
   // ===========================================================================
   defineWriteRelationship <
-    ResourceType extends keyof R extends string ? keyof R : never,
-    Relation extends keyof R[ResourceType] extends string ? keyof R[ResourceType] : never,
-    SubjectType extends R[ResourceType][Relation][number]['subjectType'],
-    CaveatName extends keyof R[ResourceType][Relation][number]['caveats'] extends string ? keyof R[ResourceType][Relation][number]['caveats'] : never,
-    CaveatType extends R[ResourceType][Relation][number]['caveats'][CaveatName],
+    ResourceType extends keyof M['objects'] extends string ? keyof M['objects'] : never,
+
+    Relation extends keyof M['objects'][ResourceType]['relations'] extends string ? keyof M['objects'][ResourceType]['relations'] : never,
+
+    SubjectType extends
+    Relation extends keyof M['objects'][ResourceType]['relations']
+      ? (keyof M['objects'][ResourceType]['relations'][Relation] extends string ? keyof M['objects'][ResourceType]['relations'][Relation] : never)
+      : never,
+
+    CaveatName extends M['objects'][ResourceType]['relations'][Relation][SubjectType]['caveat']
   > (
-    relationship: {
-      operation: 'CREATE' | 'DELETE' | 'TOUCH'
-      resource: [ResourceType | `${string}/${ResourceType}`, string | number]
-      relation: Relation
-      // TODO: I think this one is wrong and the three param version might have more subjectTypes allowed?
-      /** [subjectType, subjectId, subRelation?] */
-      subject: [SubjectType | `${string}/${SubjectType}`, string | number] | [SubjectType, string | number, string]
-      caveat?: [CaveatName, CaveatType]
-    }
-  ) {
-    return relationship
+    /** [resourceType, resourceId] */
+    [resourceType, resourceId]: [ResourceType | `${string}/${ResourceType}`, string | number],
+    relation: Relation,
+    // TODO: I think this one is wrong and the three param version might have more subjectTypes allowed?
+    /** [subjectType, subjectId, subRelation?] */
+    [subjectType, subjectId, subRelation]: [SubjectType | `${string}/${SubjectType}`, string | number] | [SubjectType | `${string}/${SubjectType}`, string | number, string],
+    options: DefineWriteRelationshipOptions<M, CaveatName> = { operation: 'TOUCH' }
+  ): WriteRelationshipsInternalOptions {
+    return {
+      resource: [resourceType, resourceId] as [ResourceType | `${string}/${ResourceType}`, string | number],
+      relation,
+      subject: [subjectType, subjectId, subRelation] as [SubjectType | `${string}/${SubjectType}`, string | number] | [SubjectType | `${string}/${SubjectType}`, string | number, string],
+      options
+    } as unknown as WriteRelationshipsInternalOptions
   }
 
   // TODO: Unfortunately you need to call the defineWriteRelationship function
   // on each array member to get type completion, it'd be nice to improve that
-  async writeRelationships (relationships: Array<ReturnType<typeof this.defineWriteRelationship>>) {
+  async writeRelationships (relationships: WriteRelationshipsInternalOptions[]) {
     const resp = await this.client.writeRelationships(v1.WriteRelationshipsRequest.create({
       updates: relationships.map(r => v1.RelationshipUpdate.create({
         relationship: v1.Relationship.create({
           resource: this.getObjectRef(r.resource[0], r.resource[1]),
           relation: r.relation,
           subject: this.getSubjectRef(r.subject[0], r.subject[1], r.subject[2]),
-          optionalCaveat: r.caveat?.[0]
-            ? v1.ContextualizedCaveat.create({ caveatName: r.caveat[0], context: r.caveat[1] })
+          optionalCaveat: r.options.caveatContext?.[0]
+            ? v1.ContextualizedCaveat.create({ caveatName: r.options.caveatName, context: r.options.caveatContext })
             : undefined
         }),
-        operation: v1.RelationshipUpdate_Operation[r.operation]
+        operation: v1.RelationshipUpdate_Operation[r.options.operation ?? 'TOUCH']
       }))
     }))
 
